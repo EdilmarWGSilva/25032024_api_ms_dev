@@ -6,6 +6,8 @@ from db.models import Produtos as ProdutosModel
 from schemas.produto import Produtos, ProdutoRequest, ProdutoResponse
 from sqlalchemy.orm import Session
 from repository.produto import ProdutoRepository
+from repository.setor import SetorRepository
+
 
 
 from db.base import Base
@@ -19,10 +21,16 @@ router = APIRouter(prefix="/v1/api/produtos")
 
 @router.post("/criar", response_model=ProdutoResponse, status_code=status.HTTP_201_CREATED)
 def create(request: ProdutoRequest, db: Session = Depends(get_db)):
-    produto = ProdutoRepository.save(db, ProdutosModel(**request.dict()))
-    return ProdutoResponse.from_orm(produto)
-
-
+    setor = SetorRepository.find_by_id(db, request.id_setor) 
+    if setor is not None:
+        produto = ProdutoRepository.save(db, ProdutosModel(**request.dict()))
+        return ProdutoResponse.from_orm(produto)
+    raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+              detail="Setor não encontrado"
+        )
+    
+    
 @router.get("/listar_todos", response_model=list[ProdutoResponse])
 def find_all(db: Session = Depends(get_db)):
     produtos = ProdutoRepository.find_all(db)
@@ -51,9 +59,11 @@ def delete_by_id(id: int, db: Session = Depends(get_db)):
 
 @router.put("/update/{id}", response_model=ProdutoResponse)
 def update(id: int, request: ProdutoRequest, db: Session = Depends(get_db)):
-    if not ProdutoRepository.exists_by_id(db, id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Produto não encontrado"
+    setor = SetorRepository.find_by_id(db, request.id_setor) 
+    if setor is not None:
+        produto = ProdutoRepository.save(db, ProdutosModel(id=id, **request.dict()))
+        return ProdutoResponse.from_orm(produto)
+    raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+              detail="Setor não encontrado"
         )
-    produto = ProdutoRepository.save(db, ProdutosModel(id=id, **request.dict()))
-    return ProdutoResponse.from_orm(produto)
