@@ -9,10 +9,6 @@ def health_check():
 app.include_router(setor_router)
 app.include_router(produto_router)
 app.include_router(usuario_router)
-            # app.include_router(poc_routes)
-
-# app.include_router(user_routes)
-# app.include_router(poc_routes)
 
 
 if __name__ == "__main__":
